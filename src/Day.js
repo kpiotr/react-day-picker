@@ -7,13 +7,13 @@ import { hasOwnProp } from './Helpers';
 
 import defaultClassNames from './classNames';
 
-function handleEvent(handler, day, modifiers) {
+function handleEvent(handler, day, modifiers, instance) {
   if (!handler) {
     return undefined;
   }
   return e => {
     e.persist();
-    handler(day, modifiers, e);
+    handler(day, modifiers, e, instance);
   };
 }
 
@@ -42,6 +42,7 @@ export default class Day extends Component {
     onTouchStart: PropTypes.func,
     onFocus: PropTypes.func,
     tabIndex: PropTypes.number,
+    dateAsString: PropTypes.string,
   };
 
   static defaultProps = {
@@ -107,6 +108,7 @@ export default class Day extends Component {
       ariaDisabled,
       ariaSelected,
       children,
+      dateAsString,
     } = this.props;
 
     let className = classNames.day;
@@ -140,15 +142,16 @@ export default class Day extends Component {
         aria-label={ariaLabel}
         aria-disabled={ariaDisabled}
         aria-selected={ariaSelected}
-        onClick={handleEvent(onClick, day, modifiers)}
-        onKeyDown={handleEvent(onKeyDown, day, modifiers)}
-        onMouseEnter={handleEvent(onMouseEnter, day, modifiers)}
-        onMouseLeave={handleEvent(onMouseLeave, day, modifiers)}
-        onMouseUp={handleEvent(onMouseUp, day, modifiers)}
-        onMouseDown={handleEvent(onMouseDown, day, modifiers)}
-        onTouchEnd={handleEvent(onTouchEnd, day, modifiers)}
-        onTouchStart={handleEvent(onTouchStart, day, modifiers)}
-        onFocus={handleEvent(onFocus, day, modifiers)}
+        onClick={handleEvent(onClick, day, modifiers, this)}
+        onKeyDown={handleEvent(onKeyDown, day, modifiers, this)}
+        onMouseEnter={handleEvent(onMouseEnter, day, modifiers, this)}
+        onMouseLeave={handleEvent(onMouseLeave, day, modifiers, this)}
+        onMouseUp={handleEvent(onMouseUp, day, modifiers, this)}
+        onMouseDown={handleEvent(onMouseDown, day, modifiers, this)}
+        onTouchEnd={handleEvent(onTouchEnd, day, modifiers, this)}
+        onTouchStart={handleEvent(onTouchStart, day, modifiers, this)}
+        onFocus={handleEvent(onFocus, day, modifiers, this)}
+        data-date={dateAsString}
       >
         {children}
       </div>

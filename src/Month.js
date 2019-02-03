@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 
 import Weekdays from './Weekdays';
@@ -9,7 +9,7 @@ import * as ModifiersUtils from './ModifiersUtils';
 import * as Helpers from './Helpers';
 import * as DateUtils from './DateUtils';
 
-export default class Month extends Component {
+export default class Month extends PureComponent {
   static propTypes = {
     classNames: PropTypes.shape({
       body: PropTypes.string.isRequired,
@@ -34,12 +34,12 @@ export default class Month extends Component {
     captionElement: PropTypes.oneOfType([
       PropTypes.element,
       PropTypes.func,
-      PropTypes.instanceOf(React.Component),
+      PropTypes.instanceOf(React.PureComponent),
     ]).isRequired,
     weekdayElement: PropTypes.oneOfType([
       PropTypes.element,
       PropTypes.func,
-      PropTypes.instanceOf(React.Component),
+      PropTypes.instanceOf(React.PureComponent),
     ]),
 
     fixedWeeks: PropTypes.bool,
@@ -65,15 +65,12 @@ export default class Month extends Component {
   };
 
   renderDay = day => {
-    const monthNumber = this.props.month.getMonth();
+    const monthNumber = new Date(this.props.month).getMonth();
     const propModifiers = Helpers.getModifiersFromProps(this.props);
     const dayModifiers = ModifiersUtils.getModifiersForDay(day, propModifiers);
     if (
       DateUtils.isSameDay(day, new Date()) &&
-      !Object.prototype.hasOwnProperty.call(
-        propModifiers,
-        this.props.classNames.today
-      )
+      !Object.prototype.hasOwnProperty.call(propModifiers, this.props.classNames.today)
     ) {
       dayModifiers.push(this.props.classNames.today);
     }
@@ -87,7 +84,7 @@ export default class Month extends Component {
     if (this.props.onDayClick && !isOutside && day.getDate() === 1) {
       tabIndex = this.props.tabIndex; // eslint-disable-line prefer-destructuring
     }
-    const key = `${day.getFullYear()}${day.getMonth()}${day.getDate()}`;
+    const key = day.toISOString();
     const modifiers = {};
     dayModifiers.forEach(modifier => {
       modifiers[modifier] = true;
@@ -100,13 +97,8 @@ export default class Month extends Component {
         day={day}
         modifiers={modifiers}
         modifiersStyles={this.props.modifiersStyles}
-        empty={
-          isOutside && !this.props.showOutsideDays && !this.props.fixedWeeks
-        }
+        empty={isOutside && !this.props.showOutsideDays && !this.props.fixedWeeks}
         tabIndex={tabIndex}
-        ariaLabel={this.props.localeUtils.formatDay(day, this.props.locale)}
-        ariaDisabled={isOutside || dayModifiers.indexOf('disabled') > -1}
-        ariaSelected={dayModifiers.indexOf('selected') > -1}
         onClick={this.props.onDayClick}
         onFocus={this.props.onDayFocus}
         onKeyDown={this.props.onDayKeyDown}
@@ -116,6 +108,7 @@ export default class Month extends Component {
         onMouseUp={this.props.onDayMouseUp}
         onTouchEnd={this.props.onDayTouchEnd}
         onTouchStart={this.props.onDayTouchStart}
+        dateAsString={key}
       >
         {this.props.renderDay(day, modifiers)}
       </Day>
@@ -146,19 +139,21 @@ export default class Month extends Component {
       onWeekClick,
     } = this.props;
 
+    const monthDate = new Date(month);
+
     const captionProps = {
-      date: month,
+      date: monthDate,
       classNames,
       months,
       localeUtils,
       locale,
-      onClick: onCaptionClick ? e => onCaptionClick(month, e) : undefined,
+      onClick: onCaptionClick ? e => onCaptionClick(monthDate, e) : undefined,
     };
     const caption = React.isValidElement(captionElement)
       ? React.cloneElement(captionElement, captionProps)
       : React.createElement(captionElement, captionProps);
 
-    const weeks = Helpers.getWeekArray(month, firstDayOfWeek, fixedWeeks);
+    const weeks = Helpers.getWeekArray(monthDate, firstDayOfWeek, fixedWeeks);
     return (
       <div className={classNames.month} role="grid">
         {caption}
@@ -181,30 +176,20 @@ export default class Month extends Component {
               weekNumber = DateUtils.getWeekNumber(week[6]);
             }
             return (
-              <div
-                key={week[0].getTime()}
-                className={classNames.week}
-                role="row"
-              >
+              <div key={week[0].getTime()} className={classNames.week} role="row">
                 {showWeekNumbers && (
                   <div
                     className={classNames.weekNumber}
                     tabIndex={0}
                     role="gridcell"
-                    onClick={
-                      onWeekClick
-                        ? e => onWeekClick(weekNumber, week, e)
-                        : undefined
-                    }
+                    onClick={onWeekClick ? e => onWeekClick(weekNumber, week, e) : undefined}
                     onKeyUp={
                       onWeekClick
-                        ? e =>
-                            e.keyCode === ENTER &&
-                            onWeekClick(weekNumber, week, e)
+                        ? e => e.keyCode === ENTER && onWeekClick(weekNumber, week, e)
                         : undefined
                     }
                   >
-                    {this.props.renderWeek(weekNumber, week, month)}
+                    {this.props.renderWeek(weekNumber, week, monthDate)}
                   </div>
                 )}
                 {week.map(this.renderDay)}
